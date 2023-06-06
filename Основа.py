@@ -186,3 +186,4 @@ try:
     app.exec_()
 except Exception as e:
     print(e)
+#Привет, как дела?
