@@ -81,19 +81,29 @@ sensor = Sensor('log_temp.log')  # Определяем сенсора
 
 # Обработка графика
 
-def plot_graph(t, temp, hum, ax=None):
+def plot_graph(t, temp, hum, ax=None, line_color_1 = None, line_color_2 = None):
     if ax is None:
         ax = plt
     else:
         ax.clear()
-    ax.plot(t, temp)
-    ax.plot(t, hum)
+    ax.plot(t, temp, color = line_color_1)
+    ax.plot(t, hum, color = line_color_2)
 
 
 def clean_data(t, data):
     return data
 
+# Скользящее среднее
 
+def smooth_data(data, window_size):
+    smoothed_data = []
+    for i in range(len(data)):
+        start_index = max(0, i - window_size + 1)
+        end_index = i + 1
+        subset = data[start_index:end_index]
+        smoothed_value = sum(subset) / len(subset)
+        smoothed_data.append(smoothed_value)
+    return smoothed_data
 
 
 # %% основной код приложения
@@ -104,13 +114,15 @@ b = Podkluchenie_k_datchikam1.Ui_MainWindow
 
 class Mywindow_small(QtWidgets.QMainWindow, b):
 
-    def __init__(self, start_sensors):
-        super().__init__()
+    def __init__(self, parent = None):
+        super().__init__(parent)
         self.setWindowTitle('Подключение датчиков')
         self.setupUi(self)
 
+        self.pushButton.clicked.connect(self.prodoljenie)
 
-        self.pushButton.clicked.connect(start_sensors)
+    def prodoljenie(self):
+        self.podcluchenie_k_datchiky()
 
 
 a = Base_window4.Ui_MainWindow
@@ -118,20 +130,23 @@ a = Base_window4.Ui_MainWindow
 
 class Mywindow(QtWidgets.QMainWindow, a):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent = None):
+        super().__init__(parent)
         self.setupUi(self)
 
         self.active = False
-        self.pushButton_2.clicked.connect(self.show_window)
+
+        self.pushButton_2.clicked.connect(self.podcluchenie_k_datchiky)
 
     def show_window(self):
-        window1 = Mywindow_small(self.podcluchenie_k_datchiky)
+        window1 = Mywindow_small()
         window1.show()
-        app.exec_()
 
 
-    def podcluchenie_k_datchiky(self, Var=None):
+
+
+
+    def podcluchenie_k_datchiky(self):
 
 
 
@@ -151,7 +166,7 @@ class Mywindow(QtWidgets.QMainWindow, a):
         ax = fig.add_subplot(1, 1, 1)
         self.active = True
         while self.active:
-            # if Var == [1, 1]:
+
             temp = sensor.read_temperature()
             hum = sensor.read_humidity()
             passed_time.append(current_t)
@@ -165,7 +180,11 @@ class Mywindow(QtWidgets.QMainWindow, a):
             clear_hum = clean_data(passed_time, all_hum)
 
             plot_graph(passed_time, all_tmp, all_hum)
-            plot_graph(passed_time, clear_tmp, clear_hum)
+
+            clear_tmp_smooth = smooth_data(clear_tmp, 3)
+            clear_hum_smooth = smooth_data(clear_hum, 3)
+
+            plot_graph(passed_time, clear_tmp_smooth, clear_hum_smooth)
 
 
 
@@ -186,4 +205,3 @@ try:
     app.exec_()
 except Exception as e:
     print(e)
-#Привет, как дела?
