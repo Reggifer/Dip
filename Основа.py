@@ -179,14 +179,15 @@ class Mywindow(QtWidgets.QMainWindow, a):
             clear_tmp = clean_data(passed_time, all_tmp)
             clear_hum = clean_data(passed_time, all_hum)
 
-            plot_graph(passed_time, all_tmp, all_hum)
+            plot_graph(passed_time, all_tmp, all_hum) # График по сырым Сырые данные
 
-            clear_tmp_smooth = smooth_data(clear_tmp, 3)
-            clear_hum_smooth = smooth_data(clear_hum, 3)
+            clear_tmp_smooth = smooth_data(clear_tmp, 3) # Сглаживание
+            clear_hum_smooth = smooth_data(clear_hum, 3) # Сглаживание
 
-            plot_graph(passed_time, clear_tmp_smooth, clear_hum_smooth)
+            plot_graph(passed_time, clear_tmp_smooth, clear_hum_smooth) # График по сглаженным данным
 
-
+# Сделать аппроксимацию/интерполяцию по сглаженным данным от времени
+# Если хватит сил, напиши функцию которая будет возвращать функцию производной, или если не получиться произдводную в точке( но это не обязательно, так общее тх поменялось)
 
             plt.title("Данные", fontsize=15)
 

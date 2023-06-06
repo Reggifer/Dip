@@ -1,50 +1,36 @@
-import sys
-
-from PyQt5 import QtCore as qtc
-from PyQt5 import QtWidgets as qtw
+from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QPushButton
 
 
-class SubWindow(qtw.QWidget):
-    submitClicked = qtc.pyqtSignal(str)  # <-- This is the sub window's signal
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
 
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        layout = qtw.QVBoxLayout()
-        self.setLayout(layout)
-        self.line_edit = qtw.QLineEdit(placeholderText="Enter URL here:")
-        self.btn = qtw.QPushButton("Submit")
-        layout.addWidget(self.line_edit)
-        layout.addWidget(self.btn)
-        self.btn.clicked.connect(self.confirm)
+        # Создание кнопки в главном окне
+        self.button = QPushButton('Открыть дополнительное окно', self)
+        self.button.clicked.connect(self.open_dialog)
+        self.setCentralWidget(self.button)
 
-    def confirm(self):  # <-- Here, the signal is emitted *along with the data we want*
-        self.submitClicked.emit(self.line_edit.text())
-        self.close()
+    def open_dialog(self):
+        # Создание дополнительного окна
+        self.dialog = QDialog(self)
+        self.dialog.button = QPushButton('Выполнить', self.dialog)
+        self.dialog.button.clicked.connect(self.execute_code)
+        self.dialog.button.clicked.connect(self.close_dialog)
+        self.dialog.setLayout(QVBoxLayout())
+        self.dialog.layout().addWidget(self.dialog.button)
+        self.dialog.exec_()
 
+    def execute_code(self):
+        # Код, который нужно выполнить в главном окне
+        print('Выполнение кода в главном окне')
 
-class MainWindow(qtw.QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.sub_window = None  # placeholder attribute for the sub window
-        layout = qtw.QVBoxLayout()
-        self.setLayout(layout)
-        self.label = qtw.QLabel("Current URL: None")
-        self.btn = qtw.QPushButton("Get new URL...")
-        layout.addWidget(self.label)
-        layout.addWidget(self.btn)
-        self.btn.clicked.connect(self.show_sub_window)
-
-    def show_sub_window(self):  # <-- Here, we create *and connect* the sub window's signal to the main window's slot
-        self.sub_window = SubWindow()
-        self.sub_window.submitClicked.connect(self.on_sub_window_confirm)
-        self.sub_window.show()
-
-    def on_sub_window_confirm(self, url):  # <-- This is the main window's slot
-        self.label.setText(f"Current URL: {url}")
+    def close_dialog(self):
+        # Закрытие дополнительного окна
+        self.dialog.close()
 
 
-if __name__ == "__main__":
-    app = qtw.QApplication(sys.argv)
-    gui = MainWindow()
-    gui.show()
-    sys.exit(app.exec_())
+if __name__ == '__main__':
+    app = QApplication([])
+    window = MainWindow()
+    window.show()
+    app.exec_()
