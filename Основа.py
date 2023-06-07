@@ -10,12 +10,12 @@ from PyQt5 import QtWidgets, QtGui, QtCore, QtTest
 from PyQt5.QtWidgets import QFileDialog, QApplication, QGraphicsPixmapItem
 from PyQt5.QtGui import QPixmap, QImage
 
-import Base_window4
+import mainwindow
 import Podkluchenie_k_datchikam1
 
 # %% основные библиотеки
 
-import matplotlib
+import matplotlib as mpl
 from statistics import mean
 import numpy as np
 import pandas as pd
@@ -25,6 +25,8 @@ import sqlite3
 import json
 import sys
 import time
+
+mpl.style.use("seaborn-whitegrid")
 
 #
 
@@ -81,13 +83,13 @@ sensor = Sensor('log_temp.log')  # Определяем сенсора
 
 # Обработка графика
 
-def plot_graph(t, temp, hum, ax=None, line_color_1 = None, line_color_2 = None):
+def plot_graph(t, temp, hum, ax=None, line_1 = None, line_2 = None):
     if ax is None:
         ax = plt
     else:
         ax.clear()
-    ax.plot(t, temp, color = line_color_1)
-    ax.plot(t, hum, color = line_color_2)
+    ax.plot(t, temp, color = line_1)
+    ax.plot(t, hum, color = line_2)
 
 
 def clean_data(t, data):
@@ -108,24 +110,7 @@ def smooth_data(data, window_size):
 
 # %% основной код приложения
 
-
-b = Podkluchenie_k_datchikam1.Ui_MainWindow
-
-
-class Mywindow_small(QtWidgets.QMainWindow, b):
-
-    def __init__(self, parent = None):
-        super().__init__(parent)
-        self.setWindowTitle('Подключение датчиков')
-        self.setupUi(self)
-
-        self.pushButton.clicked.connect(self.prodoljenie)
-
-    def prodoljenie(self):
-        self.podcluchenie_k_datchiky()
-
-
-a = Base_window4.Ui_MainWindow
+a = mainwindow.Ui_MainWindow
 
 
 class Mywindow(QtWidgets.QMainWindow, a):
@@ -137,14 +122,6 @@ class Mywindow(QtWidgets.QMainWindow, a):
         self.active = False
 
         self.pushButton_2.clicked.connect(self.podcluchenie_k_datchiky)
-
-    def show_window(self):
-        window1 = Mywindow_small()
-        window1.show()
-
-
-
-
 
     def podcluchenie_k_datchiky(self):
 
@@ -179,15 +156,13 @@ class Mywindow(QtWidgets.QMainWindow, a):
             clear_tmp = clean_data(passed_time, all_tmp)
             clear_hum = clean_data(passed_time, all_hum)
 
-            plot_graph(passed_time, all_tmp, all_hum) # График по сырым Сырые данные
+            plot_graph(passed_time, all_tmp, all_hum, line_1 = "#FF4500", line_2 = "#3D2B1F") # График по сырым Сырые данные
 
             clear_tmp_smooth = smooth_data(clear_tmp, 3) # Сглаживание
             clear_hum_smooth = smooth_data(clear_hum, 3) # Сглаживание
 
-            plot_graph(passed_time, clear_tmp_smooth, clear_hum_smooth) # График по сглаженным данным
+            plot_graph(passed_time, clear_tmp_smooth, clear_hum_smooth, line_1 = "#FF851B", line_2 = "#7D4627") # График по сглаженным данным
 
-# Сделать аппроксимацию/интерполяцию по сглаженным данным от времени
-# Если хватит сил, напиши функцию которая будет возвращать функцию производной, или если не получиться произдводную в точке( но это не обязательно, так общее тх поменялось)
 
             plt.title("Данные", fontsize=15)
 
