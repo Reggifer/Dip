@@ -11,12 +11,12 @@ from PyQt5.QtWidgets import QFileDialog, QApplication, QGraphicsPixmapItem
 from PyQt5.QtGui import QPixmap, QImage
 
 import mainwindow
-import Podkluchenie_k_datchikam1
+
 
 # %% основные библиотеки
 
 import matplotlib as mpl
-from statistics import mean
+
 import numpy as np
 import pandas as pd
 import matplotlib as mpl
@@ -83,10 +83,10 @@ sensor = Sensor('log_temp.log')  # Определяем сенсора
 
 # Обработка графика
 
-def plot_graph(t, temp, hum, ax=None, line_1 = None, line_2 = None):
+def plot_graph(t, temp, hum, ax=None, line_1 = None, line_2 = None, clear = True):
     if ax is None:
         ax = plt
-    else:
+    if clear:
         ax.clear()
     ax.plot(t, temp, color = line_1)
     ax.plot(t, hum, color = line_2)
@@ -107,6 +107,37 @@ def smooth_data(data, window_size):
         smoothed_data.append(smoothed_value)
     return smoothed_data
 
+# Ароксимация данных
+
+def find_best_polynomial_degree(t, data, max_degree):
+    best_degree = 0
+    min_residual = float('inf')
+
+    for degree in range(1, max_degree + 1):
+        coeffs = np.polyfit(t, data, degree)
+        approx_curve = np.polyval(coeffs, t)
+        residuals = data - approx_curve
+        squared_residuals = residuals**2
+        total_residual = np.sum(squared_residuals)
+
+        if total_residual < min_residual:
+            min_residual = total_residual
+            best_degree = degree
+
+    return best_degree
+
+def get_data_with_approximation(time, temperature, humidity, max_degree):
+    best_temp_degree = find_best_polynomial_degree(time, temperature, max_degree)
+    best_hum_degree = find_best_polynomial_degree(time, humidity, max_degree)
+
+    temp_coeffs = np.polyfit(time, temperature, best_temp_degree)
+    hum_coeffs = np.polyfit(time, humidity, best_hum_degree)
+
+    approx_temp = np.polyval(temp_coeffs, time)
+    approx_hum = np.polyval(hum_coeffs, time)
+
+    return approx_temp, approx_hum
+
 
 # %% основной код приложения
 
@@ -122,6 +153,16 @@ class Mywindow(QtWidgets.QMainWindow, a):
         self.active = False
 
         self.pushButton_2.clicked.connect(self.podcluchenie_k_datchiky)
+
+        self.pushButton_3.clicked.connect(self.vixod)
+
+        self.End.clicked.connect(self.zavershenie)
+
+    def zavershenie(self):
+        self.active = False
+    def vixod(self):
+        self.active = False
+        self.close()
 
     def podcluchenie_k_datchiky(self):
 
@@ -141,6 +182,7 @@ class Mywindow(QtWidgets.QMainWindow, a):
 
         fig = plt.figure()
         ax = fig.add_subplot(1, 1, 1)
+        raw_d = self.raw_data.isChecked()
         self.active = True
         while self.active:
 
@@ -155,15 +197,17 @@ class Mywindow(QtWidgets.QMainWindow, a):
 
             clear_tmp = clean_data(passed_time, all_tmp)
             clear_hum = clean_data(passed_time, all_hum)
-
-            plot_graph(passed_time, all_tmp, all_hum, line_1 = "#FF4500", line_2 = "#3D2B1F") # График по сырым Сырые данные
+            if raw_d == True:
+                plot_graph(passed_time, all_tmp, all_hum, ax = ax, line_1 = "#FF4500", line_2 = "#3D2B1F") # График по сырым Сырые данные
 
             clear_tmp_smooth = smooth_data(clear_tmp, 3) # Сглаживание
             clear_hum_smooth = smooth_data(clear_hum, 3) # Сглаживание
 
-            plot_graph(passed_time, clear_tmp_smooth, clear_hum_smooth, line_1 = "#FF851B", line_2 = "#7D4627") # График по сглаженным данным
+            #plot_graph(passed_time, clear_tmp_smooth, clear_hum_smooth, line_1 = "#FF851B", line_2 = "#7D4627") # График по сглаженным данным
 
-
+            if current_t >= 3:
+                clear_tmp_smooth_approx, clear_hum_smooth_approx = get_data_with_approximation(passed_time, clear_tmp_smooth,clear_hum_smooth, 5)
+                plot_graph(passed_time, clear_tmp_smooth_approx, clear_hum_smooth_approx, ax = ax, line_1 = "red", line_2 = "blue", clear = False)
             plt.title("Данные", fontsize=15)
 
             plt.savefig("temp.png")
