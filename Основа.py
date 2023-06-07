@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import QFileDialog, QApplication, QGraphicsPixmapItem
 from PyQt5.QtGui import QPixmap, QImage
 
 import mainwindow
-import Podkluchenie_k_datchikam1
+
 
 # %% основные библиотеки
 
@@ -25,6 +25,9 @@ import sqlite3
 import json
 import sys
 import time
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 mpl.style.use("seaborn-whitegrid")
 
@@ -147,6 +150,14 @@ class Mywindow(QtWidgets.QMainWindow, a):
             temp = sensor.read_temperature()
             hum = sensor.read_humidity()
             passed_time.append(current_t)
+            # Проверяем, достигла ли температура заданного уровня
+            if temp >= int(self.lineEdit_2.text()):
+                # Отправляем уведомление на почту
+                try:
+                    send_email('Температура достигла порога', 'Текущая температура: {} градусов'.format(temp),
+                           's-kolcov@bk.ru', self.lineEdit.text())
+                except Exception as e:
+                    pass
 
             all_tmp.append(temp)
             all_hum.append(hum)
@@ -173,6 +184,24 @@ class Mywindow(QtWidgets.QMainWindow, a):
             QtTest.QTest.qWait(10)
             current_t += 1
 
+
+# Функция для отправки уведомления на почту
+def send_email(subject, message, from_email, to_email):
+    msg = MIMEText(message)
+    msg['Subject'] = subject
+    msg['From'] = from_email
+    msg['To'] = to_email
+
+    # Создаем SMTP объект
+    server = smtplib.SMTP('smtp.mail.ru', 587)
+    server.starttls()
+
+    # Авторизуемся на сервере
+    server.login('s-kolcov@bk.ru', 'efae3HDG0xNDAAdrRxEe')
+
+    # Отправляем сообщение
+    server.sendmail('s-kolcov@bk.ru', to_email, msg.as_string())
+    server.quit()
 
 
 app = QtWidgets.QApplication(sys.argv)
