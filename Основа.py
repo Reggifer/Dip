@@ -80,18 +80,15 @@ class Sensor:
         return hum
 
 
-sensor = Sensor('log_temp.log')  # Определяем сенсора
-
-
 # Обработка графика
 
-def plot_graph(t, temp, hum, ax=None, line_1 = None, line_2 = None, clear = True):
+def plot_graph(t, temp, hum, ax=None, line_1 = None, line_2 = None, clear = True, label_1 = None, label_2 = None ):
     if ax is None:
         ax = plt
     if clear:
         ax.clear()
-    ax.plot(t, temp, color = line_1)
-    ax.plot(t, hum, color = line_2)
+    ax.plot(t, temp, color = line_1, label = label_1)
+    ax.plot(t, hum, color = line_2, label = label_2)
 
 
 def clean_data(t, data):
@@ -140,8 +137,26 @@ def get_data_with_approximation(time, temperature, humidity, max_degree):
 
     return approx_temp, approx_hum
 
+# Функция для отправки уведомления на почту
+def send_email(subject, message, from_email, to_email):
+    msg = MIMEText(message)
+    msg['Subject'] = subject
+    msg['From'] = from_email
+    msg['To'] = to_email
+
+    # Создаем SMTP объект
+    server = smtplib.SMTP('smtp.mail.ru', 587)
+    server.starttls()
+
+    # Авторизуемся на сервере
+    server.login('s-kolcov@bk.ru', 'efae3HDG0xNDAAdrRxEe')
+
+    # Отправляем сообщение
+    server.sendmail('s-kolcov@bk.ru', to_email, msg.as_string())
+    server.quit()
 
 # %% основной код приложения
+sensor = Sensor('log_temp.log')  # Определяем сенсора
 
 a = mainwindow.Ui_MainWindow
 
@@ -162,9 +177,7 @@ class Mywindow(QtWidgets.QMainWindow, a):
 
     def zavershenie(self):
         self.active = False
-    def vixod(self):
-        self.active = False
-        self.close()
+
 
     def podcluchenie_k_datchiky(self):
 
@@ -183,20 +196,13 @@ class Mywindow(QtWidgets.QMainWindow, a):
         fig = plt.figure()
         ax = fig.add_subplot(1, 1, 1)
         raw_d = self.raw_data.isChecked()
+        em = self.checkBox_3.isChecked()
         self.active = True
         while self.active:
 
             temp = sensor.read_temperature()
             hum = sensor.read_humidity()
             passed_time.append(current_t)
-            # Проверяем, достигла ли температура заданного уровня
-            if temp >= int(self.lineEdit_2.text()):
-                # Отправляем уведомление на почту
-                try:
-                    send_email('Температура достигла порога', 'Текущая температура: {} градусов'.format(temp),
-                           's-kolcov@bk.ru', self.lineEdit.text())
-                except Exception as e:
-                    pass
 
             self.label_4.setText(f"{temp}C" )
             self.humidity_value.setText(f"{hum}%")
@@ -219,9 +225,11 @@ class Mywindow(QtWidgets.QMainWindow, a):
             if current_t >= 3:
                 clear_tmp_smooth_approx, clear_hum_smooth_approx = get_data_with_approximation(passed_time, clear_tmp_smooth,clear_hum_smooth, 5)
                 if raw_d == True:
-                    plot_graph(passed_time, clear_tmp_smooth_approx, clear_hum_smooth_approx, ax = ax, line_1 = "red", line_2 = "blue", clear = False)
+                    plot_graph(passed_time, clear_tmp_smooth_approx, clear_hum_smooth_approx, ax = ax,
+                               line_1 = "red", line_2 = "blue", clear = False, label_1= "Кривая температуры", label_2= "Кривая влажности")
                 if raw_d == False:
-                    plot_graph(passed_time, clear_tmp_smooth_approx, clear_hum_smooth_approx, ax=ax, line_1="red", line_2="blue", clear = True)
+                    plot_graph(passed_time, clear_tmp_smooth_approx, clear_hum_smooth_approx, ax=ax,
+                               line_1="red", line_2="blue", clear = True, label_1= "Кривая температуры", label_2= "Кривая влажности")
             plt.title("Данные", fontsize=15)
 
             plt.savefig("temp.png")
@@ -230,25 +238,17 @@ class Mywindow(QtWidgets.QMainWindow, a):
             QApplication.processEvents()
             QtTest.QTest.qWait(1000)
             current_t += 1
+            if em == True:
+                # Проверяем, достигла ли температура заданного уровня
+                if temp >= int(self.lineEdit_2.text()):
+                    # Отправляем уведомление на почту
+                    send_email('Температура достигла порога', 'Текущая температура: {} градусов'.format(temp),
+                               's-kolcov@bk.ru', self.lineEdit.text())
+    def vixod(self):
+        self.active = False
+        self.close()
 
 
-# Функция для отправки уведомления на почту
-def send_email(subject, message, from_email, to_email):
-    msg = MIMEText(message)
-    msg['Subject'] = subject
-    msg['From'] = from_email
-    msg['To'] = to_email
-
-    # Создаем SMTP объект
-    server = smtplib.SMTP('smtp.mail.ru', 587)
-    server.starttls()
-
-    # Авторизуемся на сервере
-    server.login('s-kolcov@bk.ru', 'efae3HDG0xNDAAdrRxEe')
-
-    # Отправляем сообщение
-    server.sendmail('s-kolcov@bk.ru', to_email, msg.as_string())
-    server.quit()
 
 
 app = QtWidgets.QApplication(sys.argv)
