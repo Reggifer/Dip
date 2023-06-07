@@ -174,10 +174,9 @@ class Mywindow(QtWidgets.QMainWindow, a):
             current_t += 1
 
 
-try:
-    app = QtWidgets.QApplication(sys.argv)
-    window = Mywindow()
-    window.show()
-    app.exec_()
-except Exception as e:
-    print(e)
+
+app = QtWidgets.QApplication(sys.argv)
+window = Mywindow()
+window.show()
+app.exec_()
+
