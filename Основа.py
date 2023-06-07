@@ -16,7 +16,6 @@ import mainwindow
 # %% основные библиотеки
 
 import matplotlib as mpl
-
 import numpy as np
 import pandas as pd
 import matplotlib as mpl
@@ -166,8 +165,6 @@ class Mywindow(QtWidgets.QMainWindow, a):
 
     def podcluchenie_k_datchiky(self):
 
-
-
         con = sqlite3.connect("sensor.db")
         cur = con.cursor()
         cur.execute("""create table if not exists `sensor` ( 
@@ -190,6 +187,9 @@ class Mywindow(QtWidgets.QMainWindow, a):
             hum = sensor.read_humidity()
             passed_time.append(current_t)
 
+            self.label_4.setText(f"{temp}C" )
+            self.humidity_value.setText(f"{hum}%")
+
             all_tmp.append(temp)
             all_hum.append(hum)
             cur.execute("insert into sensor (temperature, humidity) values (%d, %d)" % (temp, hum))
@@ -207,14 +207,17 @@ class Mywindow(QtWidgets.QMainWindow, a):
 
             if current_t >= 3:
                 clear_tmp_smooth_approx, clear_hum_smooth_approx = get_data_with_approximation(passed_time, clear_tmp_smooth,clear_hum_smooth, 5)
-                plot_graph(passed_time, clear_tmp_smooth_approx, clear_hum_smooth_approx, ax = ax, line_1 = "red", line_2 = "blue", clear = False)
+                if raw_d == True:
+                    plot_graph(passed_time, clear_tmp_smooth_approx, clear_hum_smooth_approx, ax = ax, line_1 = "red", line_2 = "blue", clear = False)
+                if raw_d == False:
+                    plot_graph(passed_time, clear_tmp_smooth_approx, clear_hum_smooth_approx, ax=ax, line_1="red", line_2="blue", clear = True)
             plt.title("Данные", fontsize=15)
 
             plt.savefig("temp.png")
             self.label.setPixmap(QtGui.QPixmap("temp.png"))
 
             QApplication.processEvents()
-            QtTest.QTest.qWait(10)
+            QtTest.QTest.qWait(1000)
             current_t += 1
 
 
