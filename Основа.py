@@ -149,7 +149,7 @@ def send_email(subject, message, from_email, to_email):
     server.starttls()
 
     # Авторизуемся на сервере
-    server.login('s-kolcov@bk.ru', 'efae3HDG0xNDAAdrRxEe')
+    server.login('s-kolcov@bk.ru', 'GXkBJJ8NvsEtgfUdw244')
 
     # Отправляем сообщение
     server.sendmail('s-kolcov@bk.ru', to_email, msg.as_string())
@@ -243,7 +243,8 @@ class Mywindow(QtWidgets.QMainWindow, a):
                 if temp >= int(self.lineEdit_2.text()):
                     # Отправляем уведомление на почту
                     send_email('Температура достигла порога', 'Текущая температура: {} градусов'.format(temp),
-                               's-kolcov@bk.ru', self.lineEdit.text())
+                    's-kolcov@bk.ru', self.lineEdit.text())
+
     def vixod(self):
         self.active = False
         self.close()
